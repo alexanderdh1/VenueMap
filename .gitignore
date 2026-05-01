@@ -29,3 +29,9 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+# Claude Code internals
+.claude/
+
+# Session notes (read and deleted by hand)
+EXPLAINER.md
