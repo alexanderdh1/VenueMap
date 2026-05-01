@@ -1,6 +1,6 @@
 # VenueMap
 
-*Discover live music at small venues in your city, on a map.*
+*Discover live music at small or large venues in your city, on a map.*
 
 ## What it is
 
