@@ -7,6 +7,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from venuemap.models.event import Event
+from venuemap.scrapers.base import Scraper
 
 _BASE_URL = "https://voxhall.dk/wp-json/wp/v2"
 _VENUE_NAME = "Voxhall"
@@ -14,10 +15,13 @@ _CITY = "aarhus"
 _START_DATE_RE = re.compile(r'itemprop="startDate"[^>]+(?:datetime|content)="([^"]+)"')
 
 
-class VoxhallScraper:
+class VoxhallScraper(Scraper):
     venue_id = "voxhall-aarhus"
     venue_name = _VENUE_NAME
-    city = _CITY
+    city_slug = _CITY
+    city_name = "Aarhus"
+    latitude = 56.1529
+    longitude = 10.2038
 
     def fetch_events(self) -> list[Event]:
         raw = self._fetch_all_raw()

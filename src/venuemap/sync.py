@@ -10,17 +10,19 @@ from datetime import datetime, timezone
 
 from venuemap.db.session import SessionLocal
 from venuemap.db.upsert import get_or_create_venue, record_scrape_run, upsert_events
+from venuemap.scrapers.base import Scraper
 from venuemap.scrapers.voxhall import VoxhallScraper
 
 
-def sync_voxhall(session) -> None:
-    scraper = VoxhallScraper()
+def sync_venue(session, scraper: Scraper) -> None:
     venue = get_or_create_venue(
         session,
-        venue_slug="voxhall-aarhus",
-        venue_name="Voxhall",
-        city_slug="aarhus",
-        city_name="Aarhus",
+        venue_slug=scraper.venue_id,
+        venue_name=scraper.venue_name,
+        city_slug=scraper.city_slug,
+        city_name=scraper.city_name,
+        latitude=scraper.latitude,
+        longitude=scraper.longitude,
     )
 
     started_at = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -28,7 +30,7 @@ def sync_voxhall(session) -> None:
     events = []
 
     try:
-        print("  Fetching events from Voxhall...", flush=True)
+        print(f"  Fetching events from {scraper.venue_name}...", flush=True)
         events = scraper.fetch_events()
         print(f"  Fetched {len(events)} upcoming events.", flush=True)
     except Exception as e:
@@ -55,10 +57,15 @@ def sync_voxhall(session) -> None:
     )
 
 
+SCRAPERS: list[Scraper] = [
+    VoxhallScraper(),
+]
+
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     print("=== VenueMap sync ===")
     with SessionLocal() as session:
-        print("Voxhall:")
-        sync_voxhall(session)
+        for scraper in SCRAPERS:
+            print(f"{scraper.venue_name}:")
+            sync_venue(session, scraper)
     print("=== Sync complete ===")

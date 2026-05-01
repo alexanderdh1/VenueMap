@@ -6,9 +6,20 @@ from venuemap.db.models import City, Event, Genre, ScrapeRun, Venue, event_genre
 from venuemap.models.event import Event as EventSchema
 
 
-def get_or_create_venue(session: Session, venue_slug: str, venue_name: str, city_slug: str, city_name: str) -> Venue:
+def get_or_create_venue(
+    session: Session,
+    venue_slug: str,
+    venue_name: str,
+    city_slug: str,
+    city_name: str,
+    latitude: float | None = None,
+    longitude: float | None = None,
+) -> Venue:
     venue = session.query(Venue).filter_by(slug=venue_slug).first()
     if venue:
+        if latitude is not None:
+            venue.latitude = latitude
+            venue.longitude = longitude
         return venue
 
     city = session.query(City).filter_by(slug=city_slug).first()
@@ -17,7 +28,7 @@ def get_or_create_venue(session: Session, venue_slug: str, venue_name: str, city
         session.add(city)
         session.flush()
 
-    venue = Venue(name=venue_name, slug=venue_slug, city_id=city.id)
+    venue = Venue(name=venue_name, slug=venue_slug, city_id=city.id, latitude=latitude, longitude=longitude)
     session.add(venue)
     session.flush()
     return venue

@@ -3,6 +3,7 @@ from datetime import datetime, time
 from sqlalchemy import (
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -44,6 +45,8 @@ class Venue(Base):
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False, unique=True)  # e.g. "voxhall-aarhus"
     city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     city = relationship("City", back_populates="venues")
     events = relationship("Event", back_populates="venue")

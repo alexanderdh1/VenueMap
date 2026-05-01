@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from venuemap.api.routes import events, genres, venues
 
+app = FastAPI(title="VenueMap API", version="0.1.0")
 
-@app.get("/")
-def read_root():
-    return {"message": "VenueMap is running"}
+app.include_router(events.router, prefix="/api")
+app.include_router(venues.router, prefix="/api")
+app.include_router(genres.router, prefix="/api")
 
 
 @app.get("/health")
