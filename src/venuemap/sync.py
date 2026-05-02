@@ -41,15 +41,27 @@ def sync_venue(session, scraper: Scraper) -> None:
     if events:
         result = upsert_events(session, events, venue)
 
-    record_scrape_run(
-        session,
-        venue=venue,
-        started_at=started_at,
-        events_found=len(events),
-        new_count=result["new"],
-        updated_count=result["updated"],
-        error=error,
-    )
+    try:
+        record_scrape_run(
+            session,
+            venue=venue,
+            started_at=started_at,
+            events_found=len(events),
+            new_count=result["new"],
+            updated_count=result["updated"],
+            error=error,
+        )
+    except Exception as log_exc:
+        failed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        print(
+            f"  WARNING: scrape log could not be written\n"
+            f"    venue:      {scraper.venue_name} ({scraper.venue_id})\n"
+            f"    started_at: {started_at}\n"
+            f"    failed_at:  {failed_at}\n"
+            f"    duration:   {(failed_at - started_at).total_seconds():.1f}s\n"
+            f"    reason:     {log_exc.__class__.__name__}: {log_exc}",
+            file=sys.stderr,
+        )
 
     print(
         f"  Done — {result['total_upcoming']} upcoming events: "

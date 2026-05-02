@@ -1,27 +1,29 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session, joinedload
 
 from venuemap.api.deps import get_db
-from venuemap.api.schemas import EventResponse, EventsPage, VenueShort
+from venuemap.api.schemas import EventResponse, EventsResponse, VenueShort
 from venuemap.db.models import City, Event, Genre, Venue
 
 router = APIRouter()
 
+_DEFAULT_WINDOW_DAYS = 60
 
-@router.get("/events", response_model=EventsPage)
+
+@router.get("/events", response_model=EventsResponse)
 def get_events(
     venue: str | None = Query(None, description="Venue slug, e.g. voxhall-aarhus"),
     city: str | None = Query(None, description="City slug, e.g. aarhus"),
     genre: str | None = Query(None, description="Genre name, e.g. Rock"),
     date_from: datetime | None = Query(None),
     date_to: datetime | None = Query(None),
-    page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     now = datetime.now(timezone.utc).replace(tzinfo=None)
+    windowed = date_to is None
+    effective_date_to = date_to if date_to is not None else now + timedelta(days=_DEFAULT_WINDOW_DAYS)
 
     q = (
         db.query(Event)
@@ -30,6 +32,7 @@ def get_events(
             joinedload(Event.genres),
         )
         .filter(Event.start_datetime >= now)
+        .filter(Event.start_datetime <= effective_date_to)
     )
 
     if venue or city:
@@ -44,19 +47,23 @@ def get_events(
 
     if date_from:
         q = q.filter(Event.start_datetime >= date_from)
-    if date_to:
-        q = q.filter(Event.start_datetime <= date_to)
 
     q = q.order_by(Event.start_datetime)
+    rows = q.all()
 
-    total = q.count()
-    rows = q.offset((page - 1) * per_page).limit(per_page).all()
+    # Check if events exist beyond the default window (only relevant when window is active)
+    has_events_beyond_window = False
+    if windowed:
+        has_events_beyond_window = (
+            db.query(Event.id)
+            .filter(Event.start_datetime > effective_date_to)
+            .first()
+            is not None
+        )
 
-    return EventsPage(
+    return EventsResponse(
         events=[_to_response(e) for e in rows],
-        total=total,
-        page=page,
-        per_page=per_page,
+        has_events_beyond_window=has_events_beyond_window,
     )
 
 

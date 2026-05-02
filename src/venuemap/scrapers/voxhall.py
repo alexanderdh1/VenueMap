@@ -46,7 +46,10 @@ class VoxhallScraper(Scraper):
             while True:
                 resp = client.get(
                     f"{_BASE_URL}/voxhall-event",
-                    params={"per_page": 100, "page": page, "_embed": 1},
+                    # orderby=date sorts by WP post publication date (not event start date).
+                    # order=desc (newest published first) correlates with upcoming events
+                    # but is not guaranteed — early-stop logic below checks actual event dates.
+                    params={"per_page": 100, "page": page, "_embed": 1, "orderby": "date", "order": "desc"},
                 )
                 resp.raise_for_status()
                 batch = resp.json()

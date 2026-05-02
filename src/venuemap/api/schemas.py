@@ -31,8 +31,6 @@ class EventResponse(BaseModel):
     event_url: str
 
 
-class EventsPage(BaseModel):
+class EventsResponse(BaseModel):
     events: list[EventResponse]
-    total: int
-    page: int
-    per_page: int
+    has_events_beyond_window: bool

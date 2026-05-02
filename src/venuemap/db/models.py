@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 
 from sqlalchemy import (
     Column,
@@ -94,7 +94,7 @@ class ScrapeRun(Base):
 
     id = Column(Integer, primary_key=True)
     venue_id = Column(Integer, ForeignKey("venues.id"), nullable=False)
-    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     finished_at = Column(DateTime, nullable=True)
     events_found = Column(Integer, nullable=True)
     events_new = Column(Integer, nullable=True)
