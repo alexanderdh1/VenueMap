@@ -20,8 +20,8 @@ class VoxhallScraper(Scraper):
     venue_name = _VENUE_NAME
     city_slug = _CITY
     city_name = "Aarhus"
-    latitude = 56.1529
-    longitude = 10.2038
+    latitude = 56.1560550
+    longitude = 10.1985220
 
     def fetch_events(self) -> list[Event]:
         raw = self._fetch_all_raw()

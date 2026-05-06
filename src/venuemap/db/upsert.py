@@ -1,8 +1,10 @@
+import sys
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
 from venuemap.db.models import City, Event, Genre, ScrapeRun, Venue, event_genres
+from venuemap.geocoding import geocode
 from venuemap.models.event import Event as EventSchema
 
 
@@ -14,6 +16,7 @@ def get_or_create_venue(
     city_name: str,
     latitude: float | None = None,
     longitude: float | None = None,
+    address: str | None = None,
 ) -> Venue:
     venue = session.query(Venue).filter_by(slug=venue_slug).first()
     if venue:
@@ -21,6 +24,15 @@ def get_or_create_venue(
             venue.latitude = latitude
             venue.longitude = longitude
         return venue
+
+    # New venue without explicit coordinates — geocode from address
+    if latitude is None and address:
+        result = geocode(address)
+        if result:
+            latitude, longitude = result
+            print(f"  Geocoded '{address}' → ({latitude:.6f}, {longitude:.6f})")
+        else:
+            print(f"  WARNING: could not geocode '{address}'", file=sys.stderr)
 
     city = session.query(City).filter_by(slug=city_slug).first()
     if not city:

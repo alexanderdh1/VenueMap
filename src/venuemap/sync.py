@@ -11,7 +11,9 @@ from datetime import datetime, timezone
 from venuemap.db.session import SessionLocal
 from venuemap.db.upsert import get_or_create_venue, record_scrape_run, upsert_events
 from venuemap.scrapers.base import Scraper
-from venuemap.scrapers.voxhall import VoxhallScraper
+from venuemap.scrapers.aarhus.erlings import ErlingsScraper
+from venuemap.scrapers.aarhus.train import TrainScraper
+from venuemap.scrapers.aarhus.voxhall import VoxhallScraper
 
 
 def sync_venue(session, scraper: Scraper) -> None:
@@ -21,8 +23,9 @@ def sync_venue(session, scraper: Scraper) -> None:
         venue_name=scraper.venue_name,
         city_slug=scraper.city_slug,
         city_name=scraper.city_name,
-        latitude=scraper.latitude,
-        longitude=scraper.longitude,
+        latitude=getattr(scraper, "latitude", None),
+        longitude=getattr(scraper, "longitude", None),
+        address=getattr(scraper, "address", None),
     )
 
     started_at = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -71,6 +74,8 @@ def sync_venue(session, scraper: Scraper) -> None:
 
 SCRAPERS: list[Scraper] = [
     VoxhallScraper(),
+    ErlingsScraper(),
+    TrainScraper(),
 ]
 
 if __name__ == "__main__":
