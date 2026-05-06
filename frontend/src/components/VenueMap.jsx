@@ -20,6 +20,7 @@ export default function VenueMap({ onVenueSelect }) {
   const clusterRef = useRef(null);
   const debounceRef = useRef(null);
   const [located, setLocated] = useState(false);
+  const [apiError, setApiError] = useState(false);
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -71,6 +72,7 @@ export default function VenueMap({ onVenueSelect }) {
         lngMin: b.getWest(),
         lngMax: b.getEast(),
       }).then((venues) => {
+        setApiError(false);
         cluster.clearLayers();
         venues.forEach((venue) => {
           if (venue.latitude == null || venue.longitude == null) return;
@@ -79,9 +81,16 @@ export default function VenueMap({ onVenueSelect }) {
           marker.bindTooltip(venue.name, { permanent: false, direction: "top" });
           cluster.addLayer(marker);
         });
-      });
+      }).catch(() => setApiError(true));
     }, 300);
   }
 
-  return <div ref={containerRef} className="map-container" />;
+  return (
+    <div style={{ position: "relative", flex: 1, height: "100%" }}>
+      <div ref={containerRef} className="map-container" />
+      {apiError && (
+        <div className="map-error">Kunne ikke forbinde til API</div>
+      )}
+    </div>
+  );
 }

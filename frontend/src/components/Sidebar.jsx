@@ -7,28 +7,33 @@ export default function Sidebar({ venue, onClose }) {
   const [hasMore, setHasMore] = useState(false);
   const [showingAll, setShowingAll] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!venue) return;
     setEvents([]);
     setShowingAll(false);
+    setError(false);
     setLoading(true);
     fetchEvents(venue.slug)
       .then((data) => {
         setEvents(data.events);
         setHasMore(data.has_events_beyond_window);
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [venue]);
 
   function handleShowMore() {
     setLoading(true);
+    setError(false);
     fetchEvents(venue.slug, { dateTo: "2099-12-31T00:00:00" })
       .then((data) => {
         setEvents(data.events);
         setHasMore(false);
         setShowingAll(true);
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }
 
@@ -45,7 +50,11 @@ export default function Sidebar({ venue, onClose }) {
 
       {loading && <div className="sidebar-loading">Henter events…</div>}
 
-      {!loading && events.length === 0 && (
+      {!loading && error && (
+        <div className="sidebar-error">Kunne ikke hente events</div>
+      )}
+
+      {!loading && !error && events.length === 0 && (
         <div className="sidebar-empty">Ingen kommende events</div>
       )}
 

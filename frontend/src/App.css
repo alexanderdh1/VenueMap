@@ -81,10 +81,30 @@ body {
 
 .sidebar-loading,
 .sidebar-empty,
+.sidebar-error,
 .sidebar-all-shown {
   padding: 16px;
   color: #8b949e;
   font-size: 0.9rem;
+}
+
+.sidebar-error {
+  color: #f85149;
+}
+
+.map-error {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #21262d;
+  border: 1px solid #f85149;
+  color: #f85149;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 1000;
 }
 
 .event-list {
