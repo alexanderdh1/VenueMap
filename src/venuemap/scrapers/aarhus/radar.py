@@ -88,7 +88,7 @@ class RadarScraper(Scraper):
                 "title": h2.get_text(strip=True),
                 "start_date": start_date,
                 "event_url": f"{_BASE}{path}",
-                "image_url": img["src"] if img else None,
+                "image_url": (_BASE + img["src"] if img and img["src"].startswith("/") else img["src"] if img else None),
             })
 
         return results
