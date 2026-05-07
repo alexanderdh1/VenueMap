@@ -13,6 +13,7 @@ from venuemap.db.session import SessionLocal
 from venuemap.db.upsert import get_or_create_venue, record_scrape_run, upsert_events
 from venuemap.scrapers.base import Scraper
 from venuemap.scrapers.aarhus.erlings import ErlingsScraper
+from venuemap.scrapers.aarhus.radar import RadarScraper
 from venuemap.scrapers.aarhus.train import TrainScraper
 from venuemap.scrapers.aarhus.volumevillage import VolumeVillageScraper
 from venuemap.scrapers.aarhus.voxhall import VoxhallScraper
@@ -81,6 +82,7 @@ SCRAPERS: list[Scraper] = [
     ErlingsScraper(),
     TrainScraper(),
     VolumeVillageScraper(),
+    RadarScraper(),
 ]
 
 if __name__ == "__main__":
