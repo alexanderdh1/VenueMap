@@ -23,6 +23,12 @@ def get_or_create_venue(
         if latitude is not None:
             venue.latitude = latitude
             venue.longitude = longitude
+        elif address and venue.latitude is None:
+            # Existing venue without coordinates — geocode from address
+            result = geocode(address)
+            if result:
+                venue.latitude, venue.longitude = result
+                print(f"  Geocoded '{address}' → ({venue.latitude:.6f}, {venue.longitude:.6f})")
         return venue
 
     # New venue without explicit coordinates — geocode from address
