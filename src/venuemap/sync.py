@@ -15,6 +15,7 @@ from venuemap.scrapers.base import Scraper
 from venuemap.scrapers.aarhus.erlings import ErlingsScraper
 from venuemap.scrapers.aarhus.radar import RadarScraper
 from venuemap.scrapers.aarhus.train import TrainScraper
+from venuemap.scrapers.aarhus.turkis import TurkisScraper
 from venuemap.scrapers.aarhus.volumevillage import VolumeVillageScraper
 from venuemap.scrapers.aarhus.voxhall import VoxhallScraper
 
@@ -83,6 +84,7 @@ SCRAPERS: list[Scraper] = [
     TrainScraper(),
     VolumeVillageScraper(),
     RadarScraper(),
+    TurkisScraper(),
 ]
 
 if __name__ == "__main__":
