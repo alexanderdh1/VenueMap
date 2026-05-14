@@ -6,6 +6,7 @@ from html import unescape
 import httpx
 from bs4 import BeautifulSoup
 
+from venuemap import http
 from venuemap.models.event import Event
 from venuemap.scrapers.base import Scraper
 
@@ -44,14 +45,14 @@ class VoxhallScraper(Scraper):
         page = 1
         with httpx.Client(timeout=15.0) as client:
             while True:
-                resp = client.get(
+                resp = http.get(
+                    client,
                     f"{_BASE_URL}/voxhall-event",
                     # orderby=date sorts by WP post publication date (not event start date).
                     # order=desc (newest published first) correlates with upcoming events
                     # but is not guaranteed — early-stop logic below checks actual event dates.
                     params={"per_page": 100, "page": page, "_embed": 1, "orderby": "date", "order": "desc"},
                 )
-                resp.raise_for_status()
                 batch = resp.json()
                 if not batch:
                     break

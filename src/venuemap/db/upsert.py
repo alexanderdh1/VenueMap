@@ -125,6 +125,14 @@ def upsert_events(session: Session, events: list[EventSchema], venue: Venue) -> 
     return {"new": new_count, "updated": updated_count, "total_upcoming": len(upcoming)}
 
 
+def count_upcoming_events(session: Session, venue: Venue, since: datetime) -> int:
+    return (
+        session.query(Event)
+        .filter(Event.venue_id == venue.id, Event.start_datetime >= since)
+        .count()
+    )
+
+
 def record_scrape_run(
     session: Session,
     venue: Venue,

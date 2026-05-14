@@ -8,6 +8,7 @@ from datetime import timezone
 import httpx
 from bs4 import BeautifulSoup
 
+from venuemap import http
 from venuemap.models.event import Event
 from venuemap.scrapers.base import Scraper
 
@@ -50,8 +51,7 @@ class RadarScraper(Scraper):
     # --- Stage 1: calendar listing ---
 
     def _fetch_listings(self, client, now: datetime) -> list[dict]:
-        resp = client.get(_CALENDAR_URL)
-        resp.raise_for_status()
+        resp = http.get(client, _CALENDAR_URL)
         soup = BeautifulSoup(resp.text, "lxml")
         results = []
 
@@ -96,8 +96,7 @@ class RadarScraper(Scraper):
     # --- Stage 2: event detail page ---
 
     def _fetch_event(self, client, listing: dict) -> Event | None:
-        resp = client.get(listing["event_url"])
-        resp.raise_for_status()
+        resp = http.get(client, listing["event_url"])
         soup = BeautifulSoup(resp.text, "lxml")
 
         sidebar = soup.find("aside", class_="event-sidebar")

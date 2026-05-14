@@ -6,6 +6,7 @@ from hashlib import md5
 import httpx
 from bs4 import BeautifulSoup
 
+from venuemap import http
 from venuemap.models.event import Event
 from venuemap.scrapers.base import Scraper
 
@@ -61,11 +62,11 @@ class ErlingsScraper(Scraper):
 
     def _fetch_page(self) -> str:
         with httpx.Client(timeout=15.0) as client:
-            resp = client.get(
+            resp = http.get(
+                client,
                 _EVENTS_URL,
                 headers={"User-Agent": "Mozilla/5.0 (compatible; VenueMap/1.0)"},
             )
-            resp.raise_for_status()
             return resp.text
 
     def _parse_item(self, item) -> Event | None:

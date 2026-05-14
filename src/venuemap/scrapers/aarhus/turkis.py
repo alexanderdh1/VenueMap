@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 import httpx
 
+from venuemap import http
 from venuemap.models.event import Event
 from venuemap.scrapers.base import Scraper
 
@@ -21,8 +22,7 @@ class TurkisScraper(Scraper):
 
     def fetch_events(self) -> list[Event]:
         with httpx.Client(timeout=15.0, headers=_HEADERS, follow_redirects=True) as client:
-            resp = client.get(_API_URL)
-            resp.raise_for_status()
+            resp = http.get(client, _API_URL)
             data = resp.json()
 
         now = datetime.now(timezone.utc).replace(tzinfo=None)

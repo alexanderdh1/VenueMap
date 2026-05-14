@@ -7,6 +7,7 @@ from datetime import timezone
 import httpx
 from bs4 import BeautifulSoup
 
+from venuemap import http
 from venuemap.models.event import Event
 from venuemap.scrapers.base import Scraper
 
@@ -42,8 +43,7 @@ class TrainScraper(Scraper):
     # --- Stage 1: calendar listing ---
 
     def _fetch_slugs(self, client, now: datetime) -> list[tuple[str, str]]:
-        resp = client.get(_CALENDAR_URL)
-        resp.raise_for_status()
+        resp = http.get(client, _CALENDAR_URL)
         soup = BeautifulSoup(resp.text, "lxml")
         results = []
         for a in soup.find_all("a", class_="event"):
@@ -66,8 +66,7 @@ class TrainScraper(Scraper):
 
     def _fetch_event(self, client, slug: str, date_str: str) -> Event | None:
         url = f"{_BASE}/kalender/{slug}"
-        resp = client.get(url)
-        resp.raise_for_status()
+        resp = http.get(client, url)
         soup = BeautifulSoup(resp.text, "lxml")
 
         h1 = soup.find("h1")

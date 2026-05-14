@@ -8,6 +8,7 @@ from datetime import timezone
 import httpx
 from bs4 import BeautifulSoup
 
+from venuemap import http
 from venuemap.models.event import Event
 from venuemap.scrapers.base import Scraper
 
@@ -44,8 +45,7 @@ class VolumeVillageScraper(Scraper):
     # --- Stage 1: listing page ---
 
     def _fetch_listings(self, client, now: datetime) -> list[dict]:
-        resp = client.get(_EVENTS_URL)
-        resp.raise_for_status()
+        resp = http.get(client, _EVENTS_URL)
         soup = BeautifulSoup(resp.text, "lxml")
         results = []
 
@@ -94,8 +94,7 @@ class VolumeVillageScraper(Scraper):
     # --- Stage 2: detail page ---
 
     def _enrich(self, client, listing: dict) -> Event | None:
-        resp = client.get(listing["event_url"])
-        resp.raise_for_status()
+        resp = http.get(client, listing["event_url"])
         soup = BeautifulSoup(resp.text, "lxml")
 
         start_time = _parse_right_time(soup, tag="div")

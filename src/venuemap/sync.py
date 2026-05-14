@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 
 from venuemap.db.session import SessionLocal
-from venuemap.db.upsert import get_or_create_venue, record_scrape_run, upsert_events
+from venuemap.db.upsert import count_upcoming_events, get_or_create_venue, record_scrape_run, upsert_events
 from venuemap.scrapers.base import Scraper
 from venuemap.scrapers.aarhus.erlings import ErlingsScraper
 from venuemap.scrapers.aarhus.radar import RadarScraper
@@ -45,6 +45,12 @@ def sync_venue(scraper: Scraper) -> None:
         except Exception as e:
             error = str(e)
             print(f"  [{scraper.venue_name}] ERROR: {e}", file=sys.stderr, flush=True)
+
+        if not events and error is None:
+            existing = count_upcoming_events(session, venue, started_at)
+            if existing > 0:
+                error = f"0 events returned but {existing} upcoming events in DB — scraper may be broken"
+                print(f"  [{scraper.venue_name}] ALERT: {error}", file=sys.stderr, flush=True)
 
         result = {"new": 0, "updated": 0, "total_upcoming": 0}
         if events:
