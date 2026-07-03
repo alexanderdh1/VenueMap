@@ -1,15 +1,17 @@
-import html
 import json
-from datetime import datetime, timezone
+import re
+from datetime import datetime
+from urllib.parse import urljoin
 
 import httpx
+from bs4 import BeautifulSoup
 
 from venuemap import http
 from venuemap.models.event import Event
 from venuemap.scrapers.base import Scraper
 
-_BASE = "https://www.turkislive.com"
-_API_URL = f"{_BASE}/koncerter?format=json"
+_BASE = "https://www.turkis.nu"
+_OVERVIEW_URL = f"{_BASE}/events/koncert"
 _HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; VenueMap/1.0)"}
 
 
@@ -22,48 +24,67 @@ class TurkisScraper(Scraper):
 
     def fetch_events(self) -> list[Event]:
         with httpx.Client(timeout=15.0, headers=_HEADERS, follow_redirects=True) as client:
-            resp = http.get(client, _API_URL)
-            data = resp.json()
+            resp = http.get(client, _OVERVIEW_URL)
+            soup = BeautifulSoup(resp.text, "html.parser")
 
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        events = []
+            events = []
+            now = datetime.now()
 
-        for item in data.get("upcoming", []):
-            try:
-                event = self._parse_item(item)
-                if event and event.start_datetime >= now:
-                    events.append(event)
-            except Exception as e:
-                print(f"Warning: skipped {item.get('urlId', '?')} — {e}")
+            for link in self._extract_event_links(soup):
+                try:
+                    resp = http.get(client, link)
+                    event = self._parse_event_page(resp.text, link)
+                    if event and event.start_datetime >= now:
+                        events.append(event)
+                except Exception as e:
+                    print(f"Warning: skipped {link} — {e}")
 
         return sorted(events, key=lambda e: e.start_datetime)
 
-    def _parse_item(self, item: dict) -> Event | None:
-        start_ms = item.get("startDate")
-        if not start_ms:
-            return None
-        start_dt = datetime.fromtimestamp(start_ms / 1000)
+    def _extract_event_links(self, soup: BeautifulSoup) -> list[str]:
+        links = []
+        for card in soup.find_all("a", href=re.compile(r"/event/")):
+            href = card.get("href")
+            if href:
+                links.append(urljoin(_BASE, href))
+        return links
 
-        end_ms = item.get("endDate")
-        end_dt = datetime.fromtimestamp(end_ms / 1000) if end_ms else None
+    def _parse_event_page(self, html: str, event_url: str) -> Event | None:
+        soup = BeautifulSoup(html, "html.parser")
 
-        title = html.unescape(item.get("title", "")).strip()
+        title_elem = soup.find("h1")
+        title = title_elem.get_text(strip=True) if title_elem else None
         if not title:
             return None
 
-        slug = item["urlId"]
+        date_str = self._extract_text(soup, r"(\d{1,2}\.\d{1,2}\.\d{4})")
+        if not date_str:
+            return None
+
+        start_dt = datetime.strptime(date_str, "%d.%m.%Y")
+
+        image_url = None
+        img = soup.find("img", {"alt": re.compile(".*", re.IGNORECASE)})
+        if img and img.get("src"):
+            image_url = urljoin(_BASE, img.get("src"))
+
         return Event(
-            external_id=item["id"],
+            external_id=event_url.split("/")[-1],
             title=title,
             venue=self.venue_name,
             city=self.city_slug,
-            event_url=f"{_BASE}{item['fullUrl']}",
-            source="json",
+            event_url=event_url,
+            source="html",
             start_datetime=start_dt,
-            end_datetime=end_dt,
+            end_datetime=None,
             genres=[],
-            image_url=item.get("assetUrl"),
+            image_url=image_url,
         )
+
+    def _extract_text(self, soup: BeautifulSoup, pattern: str) -> str | None:
+        text = soup.get_text()
+        match = re.search(pattern, text)
+        return match.group(1) if match else None
 
 
 if __name__ == "__main__":
